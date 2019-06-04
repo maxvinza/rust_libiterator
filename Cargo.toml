@@ -1,0 +1,8 @@
+[package]
+name = "libiterator"
+version = "0.1.0"
+authors = ["Maxim Vinogradov <maxvinza@yandex.ru>"]
+edition = "2018"
+
+[dependencies]
+memchr = "2.2.0"
