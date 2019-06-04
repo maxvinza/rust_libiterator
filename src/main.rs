@@ -21,13 +21,15 @@ impl KeyValue {
 }
 
 
-impl Iterator for KeyValue {
-    type Item = (str, str);
+impl<'a> Iterator for  &'a KeyValue {
+    type Item = (&'a str, &'a str);
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let mut key: str = "";
-        let mut value: str = "";
+        let mut key: &'static str = "";
+        let mut value: &'static str = "";
+        key = "test";
+        /*
         let sb = &self.s[self.start ..];
         let end = sb.len();
         if end > 1 && sb < end {
@@ -55,8 +57,9 @@ impl Iterator for KeyValue {
             }
             let item = (key, value);
             return Some(item);
-        } 
-        None
+        } */
+        let item = (key, value);
+        return Some(item);
     }
 }
 
@@ -64,7 +67,7 @@ impl Iterator for KeyValue {
 pub fn main() {
     let mut map =  KeyValue::new("key=value,key2=v,k3=\"v3,v4\"", ',' , '=');
     let mut i = 0;
-    for (key, value) in map {
+    for (key, value) in &map {
         i += 1;
         if i > 10 {
             break;
