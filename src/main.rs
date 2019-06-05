@@ -21,6 +21,32 @@ impl KeyValue {
 }
 
 
+struct SimpleIt {
+    s: String,
+}
+
+
+impl SimpleIt {
+    fn new(s: &str) -> Self {
+        SimpleIt {
+            s: s.to_string(),
+        }
+    }
+}
+
+
+impl Iterator for SimpleIt {
+    type Item = char;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.s.len() > 0 {
+            let item = self.s.remove(0);
+            return Some(item)
+        }
+        None
+    }
+}
+
+
 impl<'a> Iterator for  &'a KeyValue {
     type Item = (&'a str, &'a str);
 
@@ -70,5 +96,9 @@ pub fn main() {
             break;
         }
         println!("{} - {}", key, value);
+    }
+
+    for i in SimpleIt::new("Hello, world!") {
+        println!("{}", i);
     }
 }
