@@ -1,26 +1,6 @@
 use memchr::memchr;
 
 
-struct KeyValue {
-    s: String,
-    start: usize,
-    spt_pair: u8,
-    spt_kv: u8,
-}
-
-
-impl KeyValue { 
-    fn new(s: &str, spt_pair: u8, spt_kv: u8) -> Self {
-        KeyValue {
-            s: s.to_string(),
-            start: 0,
-            spt_pair: spt_pair,
-            spt_kv: spt_kv,
-        }
-    }
-}
-
-
 struct SimpleIt<'b> {
     s: &'b str,
     step: usize
@@ -40,7 +20,7 @@ impl<'b> SimpleIt<'b> {
 impl<'b> Iterator for SimpleIt<'b> {
     type Item = &'b str;
     fn next(&mut self) -> Option<Self::Item> {
-        if self.s.len() > 0 {
+        if self.s.len() > self.step {
             let end = self.step + 1;
             let item = &self.s[self.step .. end];
             self.step = end;
@@ -51,34 +31,58 @@ impl<'b> Iterator for SimpleIt<'b> {
 }
 
 
-impl<'a> Iterator for  &'a KeyValue {
+struct KeyValue<'a> {
+    s: &'a str,
+    spt_pair: u8,
+    spt_kv: u8,
+}
+
+
+impl<'a> KeyValue<'a> { 
+    fn new(s: &'a str, spt_pair: u8, spt_kv: u8) -> Self {
+        KeyValue {
+            s,
+            spt_pair,
+            spt_kv,
+        }
+    }
+}
+
+
+
+impl<'a> Iterator for KeyValue<'a> {
     type Item = (&'a str, &'a str);
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
-        let mut key: &'a str;
-        let mut value: &'a str;
-        let sb: &'a str = &self.s.as_str()[self.start ..];
-        let end = sb.len();
+        let key: &'a str;
+        let value: &'a str;
+        let end = self.s.len();
         if end > 1 {
-            match memchr(self.spt_kv, sb.as_bytes()) {
+            match memchr(self.spt_kv, &self.s.as_bytes()) {
                 Some(end_key) => {
-                    key = &sb[.. end_key];
-                    let seporator = match memchr(self.spt_pair, &sb[end_key + 1 ..].as_bytes()) {
-                        Some(sp) => sp,
+                    key = &self.s[.. end_key];
+                    let seporator = match memchr(self.spt_pair, &self.s[end_key + 1 ..].as_bytes()) {
+                        Some(sp) => sp + end_key + 1,
                         _ => end,
                     };
-                    let droper = match memchr(b'"', &sb[end_key + 1 ..].as_bytes()) {
-                        Some(dr) => dr,
+                    let droper = match memchr(b'"', &self.s[end_key + 1 ..].as_bytes()) {
+                        Some(dr) => dr + end_key,
                         _ => seporator + 1,
                     };
                     if droper < seporator {
-                        value = match memchr(b'"', &sb[droper + 1 ..].as_bytes()){
-                            Some(end_droper) => &sb[droper + 1 .. end_droper],
-                            _ =>  &sb[droper + 1 .. end],
-                        }
+                        value = match memchr(b'"', &self.s[droper + 1 ..].as_bytes()){
+                            Some(end_droper) => &self.s[droper + 1 .. end_droper],
+                            _ =>  &self.s[droper + 1 .. end],
+                        };
+                        self.s = &self.s[end ..];
                     } else {
-                        value = &sb[end_key +1 .. seporator];
+                        value = &self.s[end_key +1 .. seporator];
+                        if seporator < end {
+                            self.s = &self.s[seporator + 1 ..];
+                        } else {
+                            self.s = "";
+                        }
                     }
                 }
                 _ => return None,
@@ -92,13 +96,8 @@ impl<'a> Iterator for  &'a KeyValue {
 
 
 pub fn main() {
-    let mut map =  KeyValue::new("key=value,key2=v,k3=\"v3,v4\"", b',' , b'=');
-    let mut i = 0;
-    for (key, value) in &map {
-        i += 1;
-        if i > 10 {
-            break;
-        }
+    //for (key, value) in KeyValue::new("key=value,key2=v,k3=\"v3,v4\"", b',' , b'=') {
+    for (key, value) in KeyValue::new("k1=v1,k2=v2,k3=v3,k4=v4", b',' , b'=') {
         println!("{} - {}", key, value);
     }
 
