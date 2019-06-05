@@ -21,25 +21,29 @@ impl KeyValue {
 }
 
 
-struct SimpleIt {
-    s: String,
+struct SimpleIt<'b> {
+    s: &'b str,
+    step: usize
 }
 
 
-impl SimpleIt {
-    fn new(s: &str) -> Self {
+impl<'b> SimpleIt<'b> {
+    fn new(s: &'b str) -> Self {
         SimpleIt {
-            s: s.to_string(),
+            s,
+            step: 0,
         }
     }
 }
 
 
-impl Iterator for SimpleIt {
-    type Item = char;
+impl<'b> Iterator for SimpleIt<'b> {
+    type Item = &'b str;
     fn next(&mut self) -> Option<Self::Item> {
         if self.s.len() > 0 {
-            let item = self.s.remove(0);
+            let end = self.step + 1;
+            let item = &self.s[self.step .. end];
+            self.step = end;
             return Some(item)
         }
         None
