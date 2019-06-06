@@ -67,17 +67,22 @@ impl<'a> Iterator for KeyValue<'a> {
                         _ => end,
                     };
                     let droper = match memchr(b'"', &self.s[end_key + 1 ..].as_bytes()) {
-                        Some(dr) => dr + end_key,
+                        Some(dr) => dr + end_key + 1,
                         _ => seporator + 1,
                     };
                     if droper < seporator {
-                        value = match memchr(b'"', &self.s[droper + 1 ..].as_bytes()){
-                            Some(end_droper) => &self.s[droper + 1 .. end_droper],
-                            _ =>  &self.s[droper + 1 .. end],
+                        let end_droper = match memchr(b'"', &self.s[droper + 1 ..].as_bytes()) {
+                            Some(v) => v + droper + 1,
+                            _ => end,
                         };
-                        self.s = &self.s[end ..];
+                        value = &self.s[droper + 1 .. end_droper];
+                        if end <= end_droper + 1 {
+                            self.s = "";
+                        } else {
+                            self.s = &self.s[end_droper + 2 ..];
+                        }
                     } else {
-                        value = &self.s[end_key +1 .. seporator];
+                        value = &self.s[end_key + 1 .. seporator];
                         if seporator < end {
                             self.s = &self.s[seporator + 1 ..];
                         } else {
@@ -96,10 +101,25 @@ impl<'a> Iterator for KeyValue<'a> {
 
 
 pub fn main() {
-    //for (key, value) in KeyValue::new("key=value,key2=v,k3=\"v3,v4\"", b',' , b'=') {
     for (key, value) in KeyValue::new("k1=v1,k2=v2,k3=v3,k4=v4", b',' , b'=') {
         println!("{} - {}", key, value);
     }
+    println!("-------------------------------------");
+
+    for (key, value) in KeyValue::new("key=value,key2=v,k3=\"v30000,v4\"", b',' , b'=') {
+        println!("{} - {}", key, value);
+    }
+    println!("-------------------------------------");
+
+    for (key, value) in KeyValue::new("key=value,key2=v,k3=\"v300<<lll,,,,00,ll\",k4=v4,k5=v5", b',' , b'=') {
+        println!("{} - {}", key, value);
+    }
+    println!("-------------------------------------");
+
+    for (key, value) in KeyValue::new("key=value,key2=\"v\",k3=\"v300<<lll,,,,00,v4\",k4=\"\",k5=\",\",   k6=v6,k7=\"v7\",k8=v8", b',' , b'=') {
+        println!("{} - {}", key, value);
+    }
+    println!("-------------------------------------");
 
     for i in SimpleIt::new("Hello, world!") {
         println!("{}", i);
